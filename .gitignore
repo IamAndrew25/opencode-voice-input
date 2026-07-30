@@ -1,0 +1,7 @@
+.env
+*.wav
+voz-temp.wav
+node_modules/
+.DS_Store
+.opencode/node_modules/
+.opencode/package-lock.json

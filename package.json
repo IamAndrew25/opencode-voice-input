@@ -1,0 +1,21 @@
+{
+  "name": "opencode-voice-input",
+  "version": "1.0.0",
+  "description": "Voice input for opencode via Groq Whisper STT",
+  "scripts": {
+    "test": "echo \"No tests yet - see README for manual verification\" && exit 0",
+    "setup": "./setup.sh"
+  },
+  "keywords": [
+    "opencode",
+    "voice",
+    "stt",
+    "groq",
+    "whisper",
+    "speech-to-text",
+    "tui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module"
+}
