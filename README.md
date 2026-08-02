@@ -29,17 +29,22 @@ you speak → ffmpeg records → silence detected → Groq Whisper transcribes �
 git clone https://github.com/YOUR_USERNAME/opencode-voice-input.git
 cd opencode-voice-input
 
-# 2. Add your Groq API key
+# 2. Install dependencies (declares dotenv + tsx locally)
+npm install
+
+# 3. Add your Groq API key
 cp .env.example .env
 # edit .env and paste your GROQ_API_KEY
 
-# 3. Install the /voz command globally
+# 4. Install the /voz command globally in opencode
 ./setup.sh
+# setup.sh runs a preflight check: if node v18+, tsx, ffmpeg, opencode,
+# or a valid .env is missing, it tells you exactly what to install and aborts.
 
-# 4. Use it
+# 5. Use it
 opencode
 # type /voz and press Enter
-# speak, wait 3 seconds of silence
+# speak, wait 5 seconds of silence
 # your words become the prompt
 ```
 
@@ -49,16 +54,20 @@ All settings live in `voz.ts`:
 
 | Parameter | Default | Description |
 |---|---|---|
-| Audio device | `:0` | ffmpeg avfoundation device index |
-| Silence threshold | `-35dB` | Audio below this = silence |
-| Silence duration | `3s` | How long silence must last to stop |
-| Min recording | `4s` | Ignore silence in first 4 seconds |
+| Audio device | `:0` | ffmpeg avfoundation audio device index |
+| Silence threshold | `-40dB` | Audio below this = silence |
+| Silence duration | `5s` | How long silence must last to stop recording |
 
-To find your audio device index:
+To find your audio device index (macOS only):
 
 ```bash
 ffmpeg -f avfoundation -list_devices true -i ""
 ```
+
+> The first audio input is `:0`. On macOS this index may map to a different
+> physical device on each machine (Bluetooth headset, USB mic, built-in mic).
+> If recording fails or captures the wrong device, list the devices and change
+> the `-i ":0"` argument to the matching index in `voz.ts`.
 
 ## Verify your setup
 
@@ -73,6 +82,21 @@ Test the full recording flow:
 ```bash
 tsx voz.ts
 ```
+
+## Run the test suite
+
+A real `npm test` is bundled. It transcribes the committed `voz.wav` fixture
+through the Groq API and checks that the result is non-empty and not the
+placeholder. It needs `GROQ_API_KEY` in your `.env`.
+
+```bash
+npm test
+```
+
+What it validates (and guards against regressions):
+- `groq-stt.ts` reaches the Groq API and parses the response
+- The committed `voz.wav` fixture produces non-empty Spanish text
+- The transcript matches the expected string (`temperature=0` keeps it stable)
 
 ## Notes
 

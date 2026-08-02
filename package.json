@@ -3,8 +3,15 @@
   "version": "1.0.0",
   "description": "Voice input for opencode via Groq Whisper STT",
   "scripts": {
-    "test": "echo \"No tests yet - see README for manual verification\" && exit 0",
+    "test": "tsx test/transcribe.test.ts",
+    "transcribe": "tsx groq-stt.ts",
     "setup": "./setup.sh"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.1"
   },
   "keywords": [
     "opencode",

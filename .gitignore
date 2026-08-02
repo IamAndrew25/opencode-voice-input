@@ -1,5 +1,6 @@
 .env
 *.wav
+!voz.wav
 voz-temp.wav
 node_modules/
 .DS_Store
