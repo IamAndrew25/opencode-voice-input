@@ -1,75 +1,77 @@
 # opencode-voice-input
 
-Voice input for [opencode](https://opencode.ai) — speak instead of typing. Records audio from your microphone, transcribes it with Groq's Whisper API, and injects the text as your prompt.
+Voice input for [opencode](https://opencode.ai): speak instead of typing. The project records audio from your microphone, transcribes it with Groq Whisper, and sends the text to OpenCode as your prompt.
 
-## How it works
+## How It Works
 
-```
-you speak → ffmpeg records → silence detected → Groq Whisper transcribes → opencode receives text as prompt
+```text
+You speak -> ffmpeg records -> silence is detected -> Groq Whisper transcribes -> OpenCode receives the text as a prompt
 ```
 
 | File | Responsibility |
 |---|---|
-| `voz.ts` | Orchestrator: records audio + silence detection + calls transcribe |
-| `groq-stt.ts` | Sends `.wav` to Groq API, returns transcribed text |
-| `setup.sh` | Installs `/voz` command globally for opencode |
+| `voz.ts` | Records audio, detects silence, and calls transcription |
+| `groq-stt.ts` | Sends a `.wav` file to the Groq API and returns its transcript |
+| `setup.sh` | Installs the global `/voz` command for OpenCode |
 
 ## Prerequisites
 
-- **[Node.js](https://nodejs.org/)** v18+ (uses native `fetch`)
-- **[tsx](https://tsx.is)** v4+ — runs TypeScript directly: `npm install -g tsx`
-- **[ffmpeg](https://ffmpeg.org/)** — audio capture and processing
-- **[opencode](https://opencode.ai)** — the TUI you're extending
+- **[Node.js](https://nodejs.org/)** v18+ for native `fetch`
+- **[tsx](https://tsx.is)** v4+ to run TypeScript directly
+- **[ffmpeg](https://ffmpeg.org/)** for microphone capture and audio processing
+- **[OpenCode](https://opencode.ai)** as the target TUI
 - A free **[Groq API key](https://console.groq.com)**
 
-## Quick start
+## Quick Start
 
 ```bash
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/opencode-voice-input.git
+# 1. Clone the repository
+git clone https://github.com/IamAndrew25/opencode-voice-input.git
 cd opencode-voice-input
 
-# 2. Install dependencies (declares dotenv + tsx locally)
+# 2. Install local dependencies
 npm install
 
-# 3. Add your Groq API key
+# 3. Install tsx globally.
+# setup.sh and the global /voz command require it to be available in PATH.
+npm install -g tsx
+
+# 4. Add your Groq API key
 cp .env.example .env
-# edit .env and paste your GROQ_API_KEY
+# Edit .env and set GROQ_API_KEY
 
-# 4. Install the /voz command globally in opencode
+# 5. Install the /voz command globally in OpenCode
 ./setup.sh
-# setup.sh runs a preflight check: if node v18+, tsx, ffmpeg, opencode,
-# or a valid .env is missing, it tells you exactly what to install and aborts.
 
-# 5. Use it
+# 6. Start OpenCode
 opencode
-# type /voz and press Enter
-# speak, wait 5 seconds of silence
-# your words become the prompt
+
+# Type /voz, press Enter, speak, then stay silent for 3 seconds.
+# Your speech becomes the prompt.
 ```
+
+`setup.sh` checks for Node.js v18+, `tsx`, `ffmpeg`, OpenCode, and a valid `GROQ_API_KEY` before installing the command.
 
 ## Configuration
 
-All settings live in `voz.ts`:
+Recording settings live in `voz.ts`:
 
 | Parameter | Default | Description |
-|---|---|---|
+|---|---:|---|
 | Audio device | `:0` | ffmpeg avfoundation audio device index |
-| Silence threshold | `-40dB` | Audio below this = silence |
-| Silence duration | `5s` | How long silence must last to stop recording |
+| Silence threshold | `-35dB` | Audio below this level is considered silence |
+| Silence duration | `3s` | Silence required to stop recording |
+| Minimum recording | `4s` | Silence detection starts after this time |
 
-To find your audio device index (macOS only):
+To list audio devices on macOS:
 
 ```bash
 ffmpeg -f avfoundation -list_devices true -i ""
 ```
 
-> The first audio input is `:0`. On macOS this index may map to a different
-> physical device on each machine (Bluetooth headset, USB mic, built-in mic).
-> If recording fails or captures the wrong device, list the devices and change
-> the `-i ":0"` argument to the matching index in `voz.ts`.
+> On macOS, `:0` can represent a different physical device on each computer. If recording fails or uses the wrong microphone, list the devices and update the `-i ":0"` value in `voz.ts`.
 
-## Verify your setup
+## Verify Your Setup
 
 Test transcription with an existing audio file:
 
@@ -77,30 +79,29 @@ Test transcription with an existing audio file:
 tsx groq-stt.ts /path/to/audio.wav
 ```
 
-Test the full recording flow:
+Test the full microphone recording flow:
 
 ```bash
 tsx voz.ts
 ```
 
-## Run the test suite
+## Run the Test Suite
 
-A real `npm test` is bundled. It transcribes the committed `voz.wav` fixture
-through the Groq API and checks that the result is non-empty and not the
-placeholder. It needs `GROQ_API_KEY` in your `.env`.
+`npm test` transcribes the included `voz.wav` fixture through Groq and validates the result. It requires a valid `GROQ_API_KEY` in `.env`.
 
 ```bash
 npm test
 ```
 
-What it validates (and guards against regressions):
-- `groq-stt.ts` reaches the Groq API and parses the response
-- The committed `voz.wav` fixture produces non-empty Spanish text
-- The transcript matches the expected string (`temperature=0` keeps it stable)
+The test verifies that:
+
+- `groq-stt.ts` reaches the Groq API and parses its response.
+- The committed `voz.wav` fixture produces a non-empty Spanish transcript.
+- The transcript matches the expected output with `temperature=0`.
 
 ## Notes
 
-- The `/voz` command uses opencode's `!` backtick template syntax to run `tsx voz.ts` and inject stdout as your prompt.
-- `.env` is gitignored — your API key never leaves your machine.
-- Temp audio file (`voz-temp.wav`) is created in your CWD and deleted after transcription.
-- Groq's free tier has rate limits. If you hit them, wait a few seconds between calls.
+- The `/voz` command executes `tsx voz.ts` and sends its standard output to OpenCode as the prompt.
+- `.env` is ignored by Git, so your API key is not committed.
+- `voz-temp.wav` is created in the current directory and deleted after transcription.
+- Groq free-tier rate limits may require waiting briefly between requests.
